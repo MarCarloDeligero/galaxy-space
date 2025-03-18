@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Tank Shooting Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; cursor: none; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Load assets
+        let tankImg, enemyImg, bgImg, bossImgs;
+        function loadAssets() {
+            tankImg = new Image();
+            enemyImg = new Image();
+            bgImg = new Image();
+            bossImgs = [];
+            const timestamp = Date.now();
+            tankImg.src = `battletank.png?${timestamp}`;
+            enemyImg.src = `enemy.png?${timestamp}`;
+            bgImg.src = `bak1.png?${timestamp}`;
+            for (let i = 1; i <= 6; i++) {
+                const bossImg = new Image();
+                bossImg.src = i === 6 ? `finalboss.png?${timestamp}` : `boss${i}.png?${timestamp}`;
+                bossImgs.push(bossImg);
+            }
+            return Promise.all([
+                new Promise(resolve => tankImg.onload = resolve),
+                new Promise(resolve => enemyImg.onload = resolve),
+                new Promise(resolve => bgImg.onload = resolve),
+                ...bossImgs.map(bossImg => new Promise(resolve => bossImg.onload = resolve))
+            ]);
+        }
+
+        // Declare variables outside initializeGame to persist across games
+        let tank, bullets, enemies, enemyBullets, explosions, stars, score, bgY;
+        let highScore = 0;
+        let isGameRunning = false;
+        let isBossFight = false;
+        let currentBossIndex = 0;
+        let boss = null;
+        let nextBossScore = 30;
+
+        function initializeGame() {
+            tank = { x: canvas.width / 2, y: canvas.height / 2, width: 80, height: 80, lives: 6 };
+            bullets = [];
+            enemies = [];
+            enemyBullets = [];
+            explosions = [];
+            stars = [];
+            score = 0;
+            bgY = 0;
+
+            for (let i = 0; i < 100; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 3 + 1 });
+            }
+            console.log("Game initialized.");
+        }
+
+        // Show "Click to Start" screen
+        function showStartScreen() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.font = "30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Click to Start", canvas.width / 2, canvas.height / 2);
+        }
+
+        // Show "Game Over" screen
+        function showGameOverScreen() {
+            if (score > highScore) highScore = score;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "red";
+            ctx.font = "50px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Click to Restart", canvas.width / 2, canvas.height / 2 + 50);
+        }
+
+        // Show Congratulations Screen
+        function showCongratulationsScreen() {
+  // Update the showCongratulationsScreen function
+function showCongratulationsScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "green";
+    ctx.font = "50px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Congratulations!", canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("You Defeated the Final Boss!", canvas.width / 2, canvas.height / 2 + 50);
+    ctx.font = "20px Arial";
+    ctx.fillText("Press SPACEBAR to Start New Game", canvas.width / 2, canvas.height / 2 + 100);
+
+    // Spacebar restart handler
+    const spaceHandler = (e) => {
+        if (e.code === "Space") {
+            console.log("Restarting game...");
+            isGameRunning = true;
+            currentBossIndex = 0;
+            nextBossScore = 30;
+            initializeGame();
+            updateGame();
+            window.removeEventListener("keydown", spaceHandler);
+        }
+    };
+
+    window.addEventListener("keydown", spaceHandler, { once: true });
+}
+
+    // Create a temporary click handler
+    const clickHandler = () => {
+        console.log("Restarting game...");
+        isGameRunning = true;
+        currentBossIndex = 0;
+        nextBossScore = 30;
+        initializeGame();
+        updateGame();
+        
+        // Remove this listener after use
+        canvas.removeEventListener("click", clickHandler);
+    };
+
+    // Add with 'once' option to auto-remove
+    canvas.addEventListener("click", clickHandler, { once: true });
+}
+
+        // Handle mouse movement
+        canvas.addEventListener("mousemove", (e) => {
+            if (isGameRunning) {
+                tank.x = e.clientX - tank.width / 2;
+                tank.y = e.clientY - tank.height / 2;
+            }
+        });
+
+        // Handle mouse clicks
+        let isClickHandlerActive = false;
+
+        function setupGameControls() {
+            if (isClickHandlerActive) return;
+            
+            canvas.addEventListener("click", (e) => {
+                if (!isGameRunning) {
+                    console.log("Starting game...");
+                    isGameRunning = true;
+                    initializeGame();
+                    updateGame();
+                } else {
+                    // Shoot bullet
+                    bullets.push({
+                        x: tank.x + tank.width/2 - 5,
+                        y: tank.y - 20,
+                        width: 10,
+                        height: 20
+                    });
+                }
+            });
+    
+    isClickHandlerActive = true;
+}
+
+        // Function to spawn enemies
+        function spawnEnemy() {
+            if (isGameRunning && !isBossFight) {
+                const maxEnemies = 10 + currentBossIndex * 10; // Increase enemy count after each boss
+                if (enemies.length >= maxEnemies) return;
+                let x = Math.random() * (canvas.width - 60);
+                enemies.push({
+                    x,
+                    y: -50,
+                    width: 60,
+                    height: 60,
+                    speed: 3 + currentBossIndex, // Increase speed after each boss
+                    lives: Math.min(2, Math.floor(score / 900) + 1),
+                    direction: Math.random() < 0.5 ? -1 : 1,
+                });
+            }
+        }
+
+        // Set up enemy spawning with a controlled interval
+        let spawnInterval = 1000;
+        setInterval(() => {
+            spawnEnemy();
+            spawnInterval = Math.max(30, 1000 - Math.floor(score / 30) * 100);
+        }, spawnInterval);
+
+        // Function for enemies to shoot bullets
+        function enemyShoot() {
+            if (isGameRunning && !isBossFight) {
+                enemies.forEach((enemy) => {
+                    if (Math.random() < 0.02) {
+                        const angle = Math.atan2(tank.y - enemy.y, tank.x - enemy.x);
+                        const speed = 5 + currentBossIndex; // Increase bullet speed after each boss
+                        const dx = Math.cos(angle) * speed;
+                        const dy = Math.sin(angle) * speed;
+
+                        if (score >= 900) {
+                            // Spread shot after boss3
+                            enemyBullets.push(
+                                { x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height, width: 10, height: 20, dx, dy },
+                                { x: enemy.x + enemy.width / 2 - 10, y: enemy.y + enemy.height, width: 10, height: 20, dx, dy },
+                                { x: enemy.x + enemy.width / 2 + 10, y: enemy.y + enemy.height, width: 10, height: 20, dx, dy }
+                            );
+                        } else {
+                            enemyBullets.push({ x: enemy.x + enemy.width / 2, y: enemy.y + enemy.height, width: 10, height: 20, dx, dy });
+                        }
+                    }
+                });
+            }
+        }
+
+        // Function for the boss to shoot bullets
+        function bossShoot() {
+            if (isGameRunning && isBossFight && boss) {
+                const angle = Math.atan2(tank.y - boss.y, tank.x - boss.x);
+                const speed = 6 + currentBossIndex; // Increase bullet speed after each boss
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+
+                for (let i = -2; i <= 2; i++) {
+                    const spreadAngle = angle + i * 0.2;
+                    const spreadDx = Math.cos(spreadAngle) * speed;
+                    const spreadDy = Math.sin(spreadAngle) * speed;
+
+                    enemyBullets.push({
+                        x: boss.x + boss.width / 2,
+                        y: boss.y + boss.height,
+                        width: 10,
+                        height: 20,
+                        dx: spreadDx,
+                        dy: spreadDy,
+                    });
+                }
+            }
+        }
+
+        // Trigger a boss fight
+        function triggerBossFight() {
+            console.log(`Triggering boss fight: Boss ${currentBossIndex + 1}`);
+            enemies = [];
+            enemyBullets = [];
+            boss = {
+                x: canvas.width / 2 - 100,
+                y: 50,
+                width: 200,
+                height: 100,
+                health: 1500 + currentBossIndex * 1000, // Increase health after each boss
+                direction: 1,
+            };
+            isBossFight = true;
+        }
+
+        function updateBoss() {
+            if (!boss) return;
+            boss.x += 3 * boss.direction;
+            if (boss.x <= 0 || boss.x + boss.width >= canvas.width) boss.direction *= -1;
+            if (Math.random() < 0.02) bossShoot();
+        }
+
+        // Main game loop
+        function updateGame() {
+            if (!isGameRunning) {
+                showStartScreen();
+                return;
+            }
+            if (tank.lives <= 0) {
+                console.log("Game Over triggered. Lives:", tank.lives);
+                isGameRunning = false;
+                showGameOverScreen();
+                return;
+            }
+            if (score >= nextBossScore && !isBossFight) triggerBossFight();
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            bgY += 2;
+            if (bgY >= canvas.height) bgY = 0;
+            ctx.drawImage(bgImg, 0, bgY, canvas.width, canvas.height);
+            ctx.drawImage(bgImg, 0, bgY - canvas.height, canvas.width, canvas.height);
+
+            // Draw stars
+            ctx.fillStyle = "white";
+            stars.forEach((star) => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                star.y += 2;
+                if (star.y > canvas.height) star.y = 0;
+            });
+
+            // Draw tank
+            ctx.drawImage(tankImg, tank.x, tank.y, tank.width, tank.height);
+
+            // Update and draw bullets
+            // Update and draw bullets
+            bullets.forEach((bullet, bi) => {
+                bullet.y -= 10;
+                
+                // Draw player bullets
+                ctx.fillStyle = "red";
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+
+                if (bullet.y < 0) bullets.splice(bi, 1);
+
+                // Check collisions with enemies
+                enemies.forEach((enemy, ei) => {
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        bullets.splice(bi, 1);
+                        enemy.lives--;
+                        explosions.push({ x: enemy.x, y: enemy.y, radius: 5, alpha: 1.0 });
+                        if (enemy.lives <= 0) {
+                            enemies.splice(ei, 1);
+                            score += 10;
+                        }
+                    }
+
+    // Check collisions with boss (existing code)...
+});
+
+                // Check collisions with boss
+                if (boss) {
+                    if (
+                        bullet.x < boss.x + boss.width &&
+                        bullet.x + bullet.width > boss.x &&
+                        bullet.y < boss.y + boss.height &&
+                        bullet.y + bullet.height > boss.y
+                    ) {
+                        bullets.splice(bi, 1);
+                        explosions.push({ x: boss.x, y: boss.y, radius: 5, alpha: 1.0 });
+                        boss.health -= 10;
+                        console.log("Boss hit! Health remaining:", boss.health);
+                        if (boss.health <= 0) {
+                            explosions.push({ x: boss.x, y: boss.y, radius: 50, alpha: 1.0 });
+                            boss = null;
+                            isBossFight = false;
+                            score += 100;
+                            console.log(`Boss ${currentBossIndex + 1} defeated!`);
+                            nextBossScore = score + 30;
+                            currentBossIndex++;
+                            if (currentBossIndex >= bossImgs.length) {
+                                console.log("All bosses defeated!");
+                                showCongratulationsScreen();
+                            } else {
+                                console.log(`Next boss will appear at score: ${nextBossScore}`);
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Update and draw enemies
+            if (!isBossFight) {
+                enemies.forEach((enemy, i) => {
+                    enemy.y += enemy.speed;
+                    if (score >= 900) {
+                        enemy.x += enemy.direction * 2;
+                        if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) enemy.direction *= -1;
+                    }
+                    ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+                    if (enemy.y > canvas.height) enemies.splice(i, 1);
+                });
+            }
+
+            // Update and draw enemy bullets
+            enemyBullets.forEach((bullet, i) => {
+                bullet.x += bullet.dx;
+                bullet.y += bullet.dy;
+                ctx.fillStyle = "yellow";
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                if (
+                    bullet.x < 0 ||
+                    bullet.x > canvas.width ||
+                    bullet.y < 0 ||
+                    bullet.y > canvas.height
+                ) {
+                    enemyBullets.splice(i, 1);
+                }
+
+                // Check collision with tank
+                if (
+                    bullet.x < tank.x + tank.width &&
+                    bullet.x + bullet.width > tank.x &&
+                    bullet.y < tank.y + tank.height &&
+                    bullet.y + bullet.height > tank.y
+                ) {
+                    enemyBullets.splice(i, 1);
+                    explosions.push({ x: tank.x, y: tank.y, radius: 5, alpha: 1.0 });
+                    tank.lives--;
+                    console.log("Tank hit! Lives remaining:", tank.lives);
+                }
+            });
+
+            // Update and draw boss
+            if (isBossFight && boss) {
+                updateBoss();
+                ctx.drawImage(bossImgs[currentBossIndex], boss.x, boss.y, boss.width, boss.height);
+            }
+
+            // Draw explosions
+            explosions.forEach((explosion, i) => {
+                ctx.beginPath();
+                ctx.arc(explosion.x + 30, explosion.y + 30, explosion.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 0, 0, ${explosion.alpha})`;
+                ctx.fill();
+                explosion.radius += 3;
+                explosion.alpha -= 0.05;
+                if (explosion.alpha <= 0) explosions.splice(i, 1);
+            });
+
+            // Draw score, high score, and lives
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Score: " + score, 20, 30);
+            ctx.fillText("High Score: " + highScore, 20, 60);
+            ctx.textAlign = "right";
+            ctx.fillText("Lives: " + tank.lives, canvas.width - 20, 30);
+            ctx.textAlign = "left";
+
+            requestAnimationFrame(updateGame);
+        }
+
+        // Start the game after loading assets
+        loadAssets().then(() => {
+    console.log("Assets loaded.");
+    setupGameControls(); // Add this line
+    showStartScreen();
+});
+    </script>
+</body>
+</html>

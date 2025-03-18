@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Game</title>
+  <style>
+    /* Reset default styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Canvas styling */
+    #gameCanvas {
+      display: block;
+      margin: 0 auto;
+      background: black; /* Fallback in case the image doesn't load */
+      cursor: none; /* Hide the mouse cursor */
+    }
+
+    /* Menu Screen */
+    #menuScreen {
+      display: none; /* Hidden by default */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #menuScreen h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+
+    #menuScreen button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    #menuScreen button.new-game {
+      background: green;
+      color: white;
+    }
+
+    #menuScreen button.highscore {
+      background: blue;
+      color: white;
+    }
+
+    #menuScreen button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Game Over Screen */
+    #gameOverScreen {
+      display: none; /* Hidden by default */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #gameOverScreen h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+
+    #gameOverScreen p {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #gameOverScreen button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    #gameOverScreen button.restart {
+      background: green;
+      color: white;
+    }
+
+    #gameOverScreen button.quit {
+      background: red;
+      color: white;
+    }
+
+    #gameOverScreen button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Pause Screen */
+    #pauseScreen {
+      display: none; /* Hidden by default */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #pauseScreen h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+
+    #pauseScreen button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    #pauseScreen button.resume {
+      background: green;
+      color: white;
+    }
+
+    #pauseScreen button:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Canvas for the game -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen">
+    <h1>Game Over</h1>
+    <p>Your Score: <span id="finalScore">0</span></p>
+    <button class="restart">Restart</button>
+    <button class="quit">Quit</button>
+  </div>
+
+  <!-- Menu Screen -->
+  <div id="menuScreen">
+    <h1>Main Menu</h1>
+    <button class="new-game">New Game</button>
+    <button class="highscore">Show Highscore</button>
+  </div>
+
+  <!-- Pause Screen -->
+  <div id="pauseScreen">
+    <h1>Paused</h1>
+    <button class="resume">Resume</button>
+  </div>
+
+  <script>
+    // Select the canvas element
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Select screens
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const menuScreen = document.getElementById('menuScreen');
+    const pauseScreen = document.getElementById('pauseScreen');
+    const finalScoreDisplay = document.getElementById('finalScore');
+
+    // Set canvas dimensions to match the window
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Load assets
+    const backgroundImage = new Image();
+    backgroundImage.src = 'bak2.png'; // Ensure this file is in the same folder
+
+    const playerImage = new Image();
+    playerImage.src = 'battletank.png'; // Ensure this file is in the same folder
+
+    const enemyImage = new Image();
+    enemyImage.src = 'enemy.png'; // Ensure this file is in the same folder
+
+    const fastEnemyImage = new Image();
+    fastEnemyImage.src = 'enemy1.png'; // Ensure this file is in the same folder
+
+    // Array of boss images
+    const bossImages = [
+      new Image(), // Boss 1
+      new Image(), // Boss 2
+      new Image(), // Boss 3
+      new Image(), // Boss 4
+      new Image(), // Boss 5
+      new Image()  // Final Boss
+    ];
+
+    bossImages[0].src = 'boss1.png'; // Boss 1
+    bossImages[1].src = 'boss2.png'; // Boss 2
+    bossImages[2].src = 'boss3.png'; // Boss 3
+    bossImages[3].src = 'boss4.png'; // Boss 4
+    bossImages[4].src = 'boss5.png'; // Boss 5
+    bossImages[5].src = 'finalboss.png'; // Final Boss
+
+    // Background scrolling properties
+    let backgroundY1 = 0;
+    let backgroundY2 = -canvas.height;
+    const backgroundSpeed = 2;
+
+    // Player properties
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      width: 50,
+      height: 50,
+      speed: 0.1,
+      lives: 6,
+      hasShield: false,
+      shieldDuration: 0,
+      shieldMaxDuration: 200,
+      canShoot: true,
+      bombStock: 0
+    };
+
+    // Mouse tracking
+    let mouseX = canvas.width / 2;
+    let mouseY = canvas.height / 2;
+
+    // Mouse state
+    let isMouseDown = false;
+
+    // Projectiles (Player's bullets)
+    const playerProjectiles = [];
+    const playerProjectileSpeed = 7;
+
+    // Enemy projectiles
+    const enemyProjectiles = [];
+    const enemyProjectileSpeed = 4;
+
+    // Enemies
+    const enemies = [];
+    const spawnRate = 50;
+    const enemyFireRate = 100;
+
+    // Power-ups
+    const powerUps = [];
+    const powerUpTypes = ['bomb', 'shield', 'extraLife'];
+
+    // Explosions
+    const explosions = [];
+    const explosionParticles = 50;
+    const explosionParticleSpeed = 5;
+    const explosionDuration = 60;
+
+    // Boss properties
+    let boss = null;
+    let currentBossIndex = 0;
+    let currentBossPhase = 1; // Initialize currentBossPhase
+    const bossThresholds = [500, 2500, 4500, 6500, 8500, 10500]; // Thresholds for bosses
+    const bossPhases = {
+      phase1: { fireRate: 60, projectileSpeed: 3 },
+      phase2: { fireRate: 30, projectileSpeed: 5 },
+      phase3: { fireRate: 20, projectileSpeed: 7, summonEnemies: true }
+    };
+
+    // Score
+    let score = 0;
+
+    // High Score
+    let highScore = localStorage.getItem('highScore') || 0;
+
+    // Final score
+    let finalScore = 0;
+
+    // Game state
+    let isGameOver = false;
+    let isPaused = false;
+
+    // Event listeners for mouse movement
+    canvas.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    // Event listener for shooting (mouse down)
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button === 0) {
+        isMouseDown = true;
+      }
+    });
+
+    // Event listener for stopping shooting (mouse up)
+    canvas.addEventListener('mouseup', (e) => {
+      if (e.button === 0) {
+        isMouseDown = false;
+      }
+    });
+
+    // Event listener for using the bomb (press B key)
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'b' && player.bombStock > 0) {
+        useBomb();
+      } else if (e.key.toLowerCase() === 'p') {
+        togglePause();
+      }
+    });
+
+    // Function to handle bomb usage
+    function useBomb() {
+      const bombSound = new Audio('bomb.mp3');
+      bombSound.play();
+
+      player.bombStock--;
+
+      for (let enemy of [...enemies]) {
+        destroyEnemy(enemy);
+      }
+
+      for (let projectile of enemyProjectiles) {
+        for (let i = 0; i < explosionParticles; i++) {
+          explosions.push({
+            x: projectile.x,
+            y: projectile.y,
+            dx: (Math.random() - 0.5) * explosionParticleSpeed,
+            dy: (Math.random() - 0.5) * explosionParticleSpeed,
+            life: Math.random() * explosionDuration,
+            size: Math.random() * 3 + 1
+          });
+        }
+      }
+
+      enemyProjectiles.length = 0;
+      score += 50;
+    }
+
+    // Function to destroy an enemy and handle scoring/power-ups
+    function destroyEnemy(enemy) {
+      const explosionSound = new Audio('explosion.mp3');
+      explosionSound.play();
+
+      for (let i = 0; i < explosionParticles; i++) {
+        explosions.push({
+          x: enemy.x + enemy.width / 2,
+          y: enemy.y + enemy.height / 2,
+          dx: (Math.random() - 0.5) * explosionParticleSpeed,
+          dy: (Math.random() - 0.5) * explosionParticleSpeed,
+          life: Math.random() * explosionDuration,
+          size: Math.random() * 3 + 1
+        });
+      }
+
+      score += 10;
+
+      if (Math.random() < 0.4) {
+        const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+        powerUps.push({
+          x: enemy.x,
+          y: enemy.y,
+          width: 30,
+          height: 30,
+          type: type,
+          speed: 2
+        });
+      }
+
+      const index = enemies.indexOf(enemy);
+      if (index > -1) {
+        enemies.splice(index, 1);
+      }
+    }
+
+    // Create an array of stars
+    const stars = [];
+    const numStars = 200;
+
+    for (let i = 0; i < numStars; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 1,
+        speed: Math.random() * 2 + 0.5
+      });
+    }
+
+    // Update star positions
+    function updateStars() {
+      for (let star of stars) {
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+      }
+    }
+
+    // Spawn enemies
+    function spawnEnemies() {
+      if (Math.random() < 1 / spawnRate) {
+        const enemy = {
+          x: Math.random() * (canvas.width - 50),
+          y: -50,
+          width: 50,
+          height: 50,
+          speed: 2,
+          wobble: Math.random() * 0.1 - 0.05,
+          wobbleDirection: Math.random() < 0.5 ? -1 : 1,
+          wobbleTimer: 0,
+          fireTimer: 0,
+          fireSpread: 2 // Number of spread shots
+        };
+        enemies.push(enemy);
+      }
+    }
+
+    // Spawn the boss
+    function spawnBoss(bossIndex) {
+      if (!bossImages[bossIndex]) return; // Prevent undefined boss images
+
+      boss = {
+        x: canvas.width / 2 - 100,
+        y: -200, // Start from the top center
+        width: 200,
+        height: 200,
+        speed: 2,
+        health: 300,
+        fireTimer: 0,
+        phase: 1,
+        erraticMovement: false,
+        image: bossImages[bossIndex] // Use the appropriate boss image
+      };
+      currentBossPhase = 1; // Reset the boss phase
+    }
+
+    // Update boss logic
+    function updateBoss() {
+      if (!boss) return;
+
+      if (boss.y < 100) {
+        boss.y += boss.speed;
+        return;
+      }
+
+      if (boss.health <= 200 && currentBossPhase === 1) {
+        currentBossPhase = 2;
+      } else if (boss.health <= 100 && currentBossPhase === 2) {
+        currentBossPhase = 3;
+        boss.erraticMovement = true;
+      }
+
+      if (boss.erraticMovement) {
+        boss.x += Math.random() > 0.5 ? boss.speed : -boss.speed;
+        if (boss.x < 0) boss.x = 0;
+        if (boss.x + boss.width > canvas.width) boss.x = canvas.width - boss.width;
+      }
+
+      const phaseConfig = bossPhases[`phase${currentBossPhase}`];
+      boss.fireTimer++;
+      if (boss.fireTimer > phaseConfig.fireRate) {
+        const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
+        const dx = Math.cos(angle) * phaseConfig.projectileSpeed;
+        const dy = Math.sin(angle) * phaseConfig.projectileSpeed;
+        enemyProjectiles.push({
+          x: boss.x + boss.width / 2,
+          y: boss.y + boss.height / 2,
+          dx: dx,
+          dy: dy
+        });
+        boss.fireTimer = 0;
+
+        if (phaseConfig.summonEnemies && Math.random() < 0.02) {
+          spawnEnemies();
+        }
+      }
+    }
+
+    // Draw the boss
+    function drawBoss() {
+      if (!boss) return;
+
+      ctx.drawImage(boss.image, boss.x, boss.y, boss.width, boss.height);
+
+      ctx.fillStyle = 'green';
+      ctx.fillRect(boss.x, boss.y - 10, (boss.health / 300) * boss.width, 5);
+    }
+
+    // Check for collisions between player projectiles and the boss
+    function checkBossCollisions() {
+      if (!boss) return;
+
+      for (let projectile of playerProjectiles) {
+        if (
+          projectile.x > boss.x &&
+          projectile.x < boss.x + boss.width &&
+          projectile.y > boss.y &&
+          projectile.y < boss.y + boss.height
+        ) {
+          playerProjectiles.splice(playerProjectiles.indexOf(projectile), 1);
+          boss.health -= 10;
+
+          for (let i = 0; i < explosionParticles; i++) {
+            explosions.push({
+              x: projectile.x,
+              y: projectile.y,
+              dx: (Math.random() - 0.5) * explosionParticleSpeed,
+              dy: (Math.random() - 0.5) * explosionParticleSpeed,
+              life: Math.random() * explosionDuration,
+              size: Math.random() * 3 + 1
+            });
+          }
+
+          if (boss.health <= 0) {
+            destroyBoss();
+          }
+        }
+      }
+    }
+
+    // Destroy the boss
+    function destroyBoss() {
+      const bossExplosionSound = new Audio('explosion.mp3');
+      bossExplosionSound.play();
+
+      for (let i = 0; i < explosionParticles * 2; i++) {
+        explosions.push({
+          x: boss.x + boss.width / 2,
+          y: boss.y + boss.height / 2,
+          dx: (Math.random() - 0.5) * explosionParticleSpeed * 2,
+          dy: (Math.random() - 0.5) * explosionParticleSpeed * 2,
+          life: Math.random() * explosionDuration * 2,
+          size: Math.random() * 5 + 2
+        });
+      }
+
+      score += 500;
+      player.bombStock += 3;
+
+      boss = null;
+      currentBossPhase = 1;
+      currentBossIndex++;
+
+      // Spawn the new fast enemy after defeating boss1
+      if (currentBossIndex === 1) {
+        spawnFastEnemy();
+      }
+    }
+
+    // Function to spawn the new fast enemy
+    function spawnFastEnemy() {
+      const enemy = {
+        x: Math.random() * canvas.width, // Random horizontal position at the top
+        y: -50, // Start from the top
+        width: 50,
+        height: 50,
+        speed: 4, // Faster than regular enemies
+        wobble: Math.random() * 0.2 - 0.1, // More erratic movement
+        wobbleDirection: Math.random() < 0.5 ? -1 : 1,
+        wobbleTimer: 0,
+        fireTimer: 0,
+        fireSpread: 2 // Number of spread shots
+      };
+      enemies.push(enemy);
+    }
+
+    // Draw everything on the canvas
+    function draw() {
+      if (isGameOver || isPaused) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the scrolling background
+      ctx.drawImage(backgroundImage, 0, backgroundY1, canvas.width, canvas.height);
+      ctx.drawImage(backgroundImage, 0, backgroundY2, canvas.width, canvas.height);
+
+      backgroundY1 += backgroundSpeed;
+      backgroundY2 += backgroundSpeed;
+
+      if (backgroundY1 >= canvas.height) backgroundY1 = backgroundY2 - canvas.height;
+      if (backgroundY2 >= canvas.height) backgroundY2 = backgroundY1 - canvas.height;
+
+      // Draw stars
+      ctx.fillStyle = 'white';
+      for (let star of stars) {
+        ctx.fillRect(star.x, star.y, star.size, star.size);
+      }
+
+      updateStars();
+
+      // Spawn and draw enemies
+      spawnEnemies();
+      for (let enemy of enemies) {
+        // Draw the fast enemy with a different image
+        if (enemy.speed === 4) {
+          ctx.drawImage(fastEnemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+        } else {
+          ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+        }
+
+        enemy.y += enemy.speed;
+        enemy.wobbleTimer++;
+        if (enemy.wobbleTimer > 30) {
+          enemy.wobbleDirection *= -1;
+          enemy.wobbleTimer = 0;
+        }
+        enemy.x += enemy.wobble * enemy.wobbleDirection;
+
+        if (enemy.x < 0) enemy.x = 0;
+        if (enemy.x + enemy.width > canvas.width) enemy.x = canvas.width - enemy.width;
+
+        if (enemy.y > canvas.height) {
+          enemies.splice(enemies.indexOf(enemy), 1);
+        }
+
+        enemy.fireTimer++;
+        if (enemy.fireTimer > enemyFireRate && enemy.fireSpread) {
+          const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+          const baseDx = Math.cos(angle) * enemyProjectileSpeed;
+          const baseDy = Math.sin(angle) * enemyProjectileSpeed;
+
+          for (let i = 0; i < enemy.fireSpread; i++) {
+            const spreadAngle = angle + (Math.random() - 0.5) * 0.2; // Slight spread
+            const dx = Math.cos(spreadAngle) * enemyProjectileSpeed;
+            const dy = Math.sin(spreadAngle) * enemyProjectileSpeed;
+            enemyProjectiles.push({
+              x: enemy.x + enemy.width / 2,
+              y: enemy.y + enemy.height / 2,
+              dx: dx,
+              dy: dy
+            });
+          }
+
+          enemy.fireTimer = 0;
+        }
+      }
+
+      // Handle shooting logic
+      if (isMouseDown && player.canShoot) {
+        const shootSound = new Audio('shoot.mp3');
+        shootSound.play();
+
+        playerProjectiles.push({
+          x: player.x + player.width / 2,
+          y: player.y + player.height / 2,
+          speed: playerProjectileSpeed
+        });
+
+        player.canShoot = false;
+        setTimeout(() => (player.canShoot = true), 500);
+      }
+
+      // Draw player projectiles
+      ctx.fillStyle = 'yellow';
+      for (let projectile of playerProjectiles) {
+        ctx.beginPath();
+        ctx.arc(projectile.x, projectile.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+
+        projectile.y -= projectile.speed;
+
+        if (projectile.y < 0) {
+          playerProjectiles.splice(playerProjectiles.indexOf(projectile), 1);
+        }
+      }
+
+      // Check for collisions between player projectiles and enemies
+      for (let projectile of playerProjectiles) {
+        for (let enemy of [...enemies]) {
+          if (
+            projectile.x > enemy.x &&
+            projectile.x < enemy.x + enemy.width &&
+            projectile.y > enemy.y &&
+            projectile.y < enemy.y + enemy.height
+          ) {
+            playerProjectiles.splice(playerProjectiles.indexOf(projectile), 1);
+            destroyEnemy(enemy);
+          }
+        }
+      }
+
+      // Draw and update power-ups
+      for (let powerUp of powerUps) {
+        if (powerUp.type === 'extraLife') {
+          ctx.fillStyle = 'red';
+          ctx.font = '20px Arial';
+          ctx.fillText('1UP', powerUp.x, powerUp.y + 20);
+        } else {
+          ctx.fillStyle =
+            powerUp.type === 'bomb' ? 'orange' : 'magenta';
+          ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+        }
+
+        powerUp.y += powerUp.speed;
+
+        if (powerUp.y > canvas.height) {
+          powerUps.splice(powerUps.indexOf(powerUp), 1);
+        }
+      }
+
+      // Check for collisions between player and power-ups
+      for (let powerUp of powerUps) {
+        if (
+          player.x < powerUp.x + powerUp.width &&
+          player.x + player.width > powerUp.x &&
+          player.y < powerUp.y + powerUp.height &&
+          player.y + player.height > powerUp.y
+        ) {
+          const powerUpSound = new Audio('powerup.mp3');
+          powerUpSound.play();
+
+          powerUps.splice(powerUps.indexOf(powerUp), 1);
+
+          if (powerUp.type === 'bomb') {
+            player.bombStock++;
+          } else if (powerUp.type === 'shield') {
+            const shieldSound = new Audio('shield.mp3');
+            shieldSound.play();
+
+            if (!player.hasShield) {
+              player.hasShield = true;
+            }
+            player.shieldDuration += player.shieldMaxDuration;
+          } else if (powerUp.type === 'extraLife') {
+            player.lives++;
+          }
+        }
+      }
+
+      // Decrease shield duration
+      if (player.hasShield) {
+        player.shieldDuration--;
+        if (player.shieldDuration <= 0) {
+          player.hasShield = false;
+        }
+      }
+
+      if (player.hasShield) {
+        ctx.strokeStyle = 'magenta';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(
+          player.x + player.width / 2,
+          player.y + player.height / 2,
+          player.width / 2 + 10,
+          0,
+          Math.PI * 2
+        );
+        ctx.stroke();
+
+        const shieldTimeLeft = Math.ceil(player.shieldDuration / 60);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText(`Shield: ${shieldTimeLeft}s`, player.x, player.y - 10);
+      }
+
+      if (player.hasShield) {
+        for (let enemy of [...enemies]) {
+          const distance = Math.hypot(
+            (player.x + player.width / 2) - (enemy.x + enemy.width / 2),
+            (player.y + player.height / 2) - (enemy.y + enemy.height / 2)
+          );
+
+          if (distance < player.width / 2 + 10 + enemy.width / 2) {
+            destroyEnemy(enemy);
+          }
+        }
+      }
+
+      // Draw and update enemy projectiles
+      ctx.fillStyle = 'red';
+      for (let projectile of enemyProjectiles) {
+        ctx.beginPath();
+        ctx.arc(projectile.x, projectile.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+
+        projectile.x += projectile.dx;
+        projectile.y += projectile.dy;
+
+        if (
+          projectile.x < 0 ||
+          projectile.x > canvas.width ||
+          projectile.y < 0 ||
+          projectile.y > canvas.height
+        ) {
+          enemyProjectiles.splice(enemyProjectiles.indexOf(projectile), 1);
+        }
+      }
+
+      // Check for collisions between enemy projectiles and the player
+      for (let projectile of enemyProjectiles) {
+        if (
+          !player.hasShield &&
+          projectile.x > player.x &&
+          projectile.x < player.x + player.width &&
+          projectile.y > player.y &&
+          projectile.y < player.y + player.height
+        ) {
+          enemyProjectiles.splice(enemyProjectiles.indexOf(projectile), 1);
+
+          player.lives--;
+
+          for (let i = 0; i < 20; i++) {
+            explosions.push({
+              x: player.x + player.width / 2,
+              y: player.y + player.height / 2,
+              dx: (Math.random() - 0.5) * 5,
+              dy: (Math.random() - 0.5) * 5,
+              life: Math.random() * 30,
+              size: Math.random() * 2 + 1
+            });
+          }
+
+          if (player.lives <= 0) {
+            gameOver();
+          }
+        }
+      }
+
+      // Check for collisions between the player and enemies
+      for (let enemy of [...enemies]) {
+        if (
+          !player.hasShield &&
+          player.x < enemy.x + enemy.width &&
+          player.x + player.width > enemy.x &&
+          player.y < enemy.y + enemy.height &&
+          player.y + player.height > enemy.y
+        ) {
+          player.lives--;
+          destroyEnemy(enemy);
+
+          for (let i = 0; i < 20; i++) {
+            explosions.push({
+              x: player.x + player.width / 2,
+              y: player.y + player.height / 2,
+              dx: (Math.random() - 0.5) * 5,
+              dy: (Math.random() - 0.5) * 5,
+              life: Math.random() * 30,
+              size: Math.random() * 2 + 1
+            });
+          }
+
+          if (player.lives <= 0) {
+            gameOver();
+          }
+        }
+      }
+
+      // Draw and update explosions
+      ctx.fillStyle = 'orange';
+      for (let explosion of explosions) {
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+
+        explosion.x += explosion.dx;
+        explosion.y += explosion.dy;
+        explosion.life--;
+
+        if (explosion.life <= 0) {
+          explosions.splice(explosions.indexOf(explosion), 1);
+        }
+      }
+
+      // Update player position
+      player.x += (mouseX - (player.x + player.width / 2)) * player.speed;
+      player.y += (mouseY - (player.y + player.height / 2)) * player.speed;
+
+      if (player.x < 0) player.x = 0;
+      if (player.y < 0) player.y = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+      if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+
+      // Draw the player
+      ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+
+      // Draw UI elements
+      ctx.fillStyle = 'white';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Lives: ${player.lives}`, 10, 30);
+      ctx.fillText(`Score: ${score}`, 10, 60);
+      ctx.fillText(`Bombs: ${player.bombStock}`, canvas.width - 120, 30);
+
+      // Spawn the boss based on score thresholds
+      if (!boss && currentBossIndex < bossThresholds.length && score >= bossThresholds[currentBossIndex]) {
+        spawnBoss(currentBossIndex);
+      }
+
+      // Update and draw the boss
+      if (boss) {
+        updateBoss();
+        drawBoss();
+        checkBossCollisions();
+      }
+
+      // Continuously spawn fast enemies after defeating boss1
+      if (currentBossIndex > 0 && Math.random() < 0.02) {
+        spawnFastEnemy();
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    // Function to handle game over
+    function gameOver() {
+      const gameSound = new Audio('game.mp3');
+      const gameOverSound = new Audio('gameover.mp3');
+      gameSound.play();
+      gameSound.addEventListener('ended', () => gameOverSound.play());
+
+      isGameOver = true;
+      finalScore = score;
+      finalScoreDisplay.textContent = score;
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+      }
+
+      gameOverScreen.style.display = 'block';
+    }
+
+    // Restart the game
+    document.querySelector('.restart').addEventListener('click', () => {
+      location.reload();
+    });
+
+    // Quit to menu
+    document.querySelector('.quit').addEventListener('click', () => {
+      gameOverScreen.style.display = 'none';
+      canvas.style.display = 'none';
+      menuScreen.style.display = 'block';
+    });
+
+    // New Game from menu
+    document.querySelector('.new-game').addEventListener('click', () => {
+      location.reload();
+    });
+
+    // Show Highscore button functionality
+    document.querySelector('.highscore').addEventListener('click', () => {
+      const highscoreButton = document.querySelector('.highscore');
+      highscoreButton.textContent = `High Score: ${highScore}\nYour Score: ${finalScore}`;
+      highscoreButton.style.whiteSpace = 'pre-wrap';
+      highscoreButton.disabled = true;
+    });
+
+    // Toggle pause/resume functionality
+    function togglePause() {
+      if (isGameOver) return;
+      isPaused = !isPaused;
+
+      if (isPaused) {
+        pauseScreen.style.display = 'block';
+      } else {
+        pauseScreen.style.display = 'none';
+        requestAnimationFrame(draw);
+      }
+    }
+
+    // Resume button on the pause screen
+    document.querySelector('.resume').addEventListener('click', () => {
+      togglePause();
+    });
+
+    // Start the game loop
+    draw();
+
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>

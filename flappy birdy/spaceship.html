@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaceship Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; color: white; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        #scoreboard {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+        }
+        #lives {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            font-size: 20px;
+        }
+        #powerups {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            font-size: 16px;
+        }
+    </style>
+    <!-- Sound Effects -->
+    <audio id="shootSound" src="https://assets.mixkit.co/active_storage/sfx/2752/2752-preview.mp3"></audio>
+    <audio id="explosionSound" src="mixkit-arcade-game-explosion-2759.wav"></audio>
+    <audio id="powerupSound" src="https://assets.mixkit.co/active_storage/sfx/2820/2820-preview.mp3"></audio>
+    <audio id="laserSound" src="https://assets.mixkit.co/active_storage/sfx/2527/2527-preview.mp3"></audio>
+    <audio id="gameOverSound" src="https://assets.mixkit.co/active_storage/sfx/2593/2593-preview.mp3"></audio>
+</head>
+<body>
+    <div id="scoreboard">Score: 0</div>
+    <div id="lives">Lives: 6</div>
+    <div id="powerups">Power-ups: None</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let score = 0;
+        let lives = 6;
+
+        // Sound effects
+        const sounds = {
+            shoot: document.getElementById('shootSound'),
+            explosion: document.getElementById('explosionSound'),
+            powerup: document.getElementById('powerupSound'),
+            laser: document.getElementById('laserSound'),
+            gameover: document.getElementById('gameOverSound')
+        };
+
+        class Spaceship {
+            constructor() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height - 50;
+                this.width = 50;
+                this.height = 50;
+                this.shieldActive = false;
+                this.weaponType = 'single';
+                this.speedMultiplier = 1;
+                this.scoreMultiplier = 1;
+                this.activePowerUps = [];
+            }
+            draw() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                if (this.shieldActive) {
+                    ctx.strokeStyle = "cyan";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 35, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        class Bullet {
+            constructor(x, y, speedX, speedY, color) {
+                this.x = x;
+                this.y = y;
+                this.speedX = speedX;
+                this.speedY = speedY;
+                this.color = color;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - 5, this.y, 10, 20);
+            }
+        }
+
+        class Explosion {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.maxRadius = 30;
+                this.alpha = 1;
+            }
+            update() {
+                this.radius += 2;
+                this.alpha -= 0.05;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 165, 0, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+
+        class Enemy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 50;
+                this.height = 50;
+                this.speed = 2;
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.y = -50;
+                    this.x = Math.random() * (canvas.width - this.width);
+                }
+                if (Math.random() < 0.02) {
+                    let angle = Math.atan2(spaceship.y - this.y, spaceship.x - this.x);
+                    let speedX = Math.cos(angle) * 5;
+                    let speedY = Math.sin(angle) * 5;
+                    enemyBullets.push(new Bullet(this.x + this.width / 2, this.y + this.height, speedX, speedY, "yellow"));
+                }
+            }
+            draw() {
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            dropPowerUp() {
+                if (Math.random() < 0.2) {
+                    powerUps.push(new PowerUp(this.x + this.width/2, this.y + this.height/2));
+                }
+            }
+        }
+
+        class PowerUp {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 20;
+                this.speed = 2;
+                this.type = this.randomType();
+                this.colors = {
+                    spread: "lime",
+                    laser: "yellow",
+                    shield: "cyan",
+                    speed: "orange",
+                    life: "pink",
+                    multiplier: "purple"
+                };
+            }
+            randomType() {
+                const types = ['spread', 'laser', 'shield', 'speed', 'life', 'multiplier'];
+                return types[Math.floor(Math.random() * types.length)];
+            }
+            update() {
+                this.y += this.speed;
+            }
+            draw() {
+                ctx.fillStyle = this.colors[this.type];
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "black";
+                ctx.font = "14px Arial";
+                ctx.fillText(this.type[0].toUpperCase(), this.x-5, this.y+5);
+            }
+        }
+
+        const spaceship = new Spaceship();
+        const bullets = [];
+        const enemies = [];
+        const enemyBullets = [];
+        const explosions = [];
+        const powerUps = [];
+        const activeLasers = [];
+
+        function spawnEnemies() {
+            for (let i = 0; i < 5; i++) {
+                enemies.push(new Enemy(Math.random() * (canvas.width - 50), Math.random() * -200));
+            }
+        }
+        spawnEnemies();
+
+        function applyPowerUp(type) {
+            sounds.powerup.currentTime = 0;
+            sounds.powerup.play();
+            const powerupDuration = 10000;
+            spaceship.activePowerUps.push(type);
+            updatePowerUpDisplay();
+
+            switch(type) {
+                case 'spread':
+                    spaceship.weaponType = 'spread';
+                    break;
+                case 'laser':
+                    spaceship.weaponType = 'laser';
+                    setTimeout(() => {
+                        spaceship.weaponType = 'single';
+                        spaceship.activePowerUps = spaceship.activePowerUps.filter(t => t !== 'laser');
+                        updatePowerUpDisplay();
+                    }, powerupDuration);
+                    break;
+                case 'shield':
+                    spaceship.shieldActive = true;
+                    setTimeout(() => {
+                        spaceship.shieldActive = false;
+                        spaceship.activePowerUps = spaceship.activePowerUps.filter(t => t !== 'shield');
+                        updatePowerUpDisplay();
+                    }, powerupDuration);
+                    break;
+                case 'speed':
+                    spaceship.speedMultiplier = 2;
+                    setTimeout(() => {
+                        spaceship.speedMultiplier = 1;
+                        spaceship.activePowerUps = spaceship.activePowerUps.filter(t => t !== 'speed');
+                        updatePowerUpDisplay();
+                    }, powerupDuration);
+                    break;
+                case 'life':
+                    lives++;
+                    document.getElementById("lives").innerText = "Lives: " + lives;
+                    break;
+                case 'multiplier':
+                    spaceship.scoreMultiplier = 2;
+                    setTimeout(() => {
+                        spaceship.scoreMultiplier = 1;
+                        spaceship.activePowerUps = spaceship.activePowerUps.filter(t => t !== 'multiplier');
+                        updatePowerUpDisplay();
+                    }, powerupDuration);
+                    break;
+            }
+        }
+
+        function updatePowerUpDisplay() {
+            const display = document.getElementById("powerups");
+            display.innerHTML = "Power-ups: " + (spaceship.activePowerUps.length > 0 ? 
+                spaceship.activePowerUps.join(', ') : "None");
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            spaceship.draw();
+
+            bullets.forEach((bullet, bIndex) => {
+                bullet.update();
+                bullet.draw();
+                if (bullet.y < 0) bullets.splice(bIndex, 1);
+                
+                enemies.forEach((enemy, eIndex) => {
+                    if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                        bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                        bullets.splice(bIndex, 1);
+                        explosions.push(new Explosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+                        sounds.explosion.currentTime = 0;
+                        sounds.explosion.cloneNode().play();
+                        enemies.splice(eIndex, 1);
+                        score += 10 * spaceship.scoreMultiplier;
+                        document.getElementById("scoreboard").innerText = "Score: " + score;
+                        enemy.dropPowerUp();
+                        enemies.push(new Enemy(Math.random() * (canvas.width - 50), Math.random() * -200));
+                    }
+                });
+            });
+
+            enemies.forEach((enemy) => {
+                enemy.update();
+                enemy.draw();
+            });
+
+            enemyBullets.forEach((bullet, index) => {
+                bullet.update();
+                bullet.draw();
+                if (bullet.y > canvas.height || bullet.x < 0 || bullet.x > canvas.width) {
+                    enemyBullets.splice(index, 1);
+                }
+                if (bullet.x > spaceship.x - 25 && bullet.x < spaceship.x + 25 &&
+                    bullet.y > spaceship.y - 25 && bullet.y < spaceship.y + 25) {
+                    if (!spaceship.shieldActive) {
+                        lives--;
+                        document.getElementById("lives").innerText = "Lives: " + lives;
+                        sounds.explosion.currentTime = 0;
+                        sounds.explosion.play();
+                        if (lives <= 0) {
+                            sounds.gameover.currentTime = 0;
+                            sounds.gameover.play();
+                            alert("Game Over! Score: " + score);
+                            location.reload();
+                        }
+                    }
+                    enemyBullets.splice(index, 1);
+                    explosions.push(new Explosion(spaceship.x, spaceship.y));
+                }
+            });
+
+            powerUps.forEach((powerUp, index) => {
+                powerUp.update();
+                powerUp.draw();
+                const dx = spaceship.x - powerUp.x;
+                const dy = spaceship.y - powerUp.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 35) {
+                    applyPowerUp(powerUp.type);
+                    powerUps.splice(index, 1);
+                }
+            });
+
+            activeLasers.forEach((laser, index) => {
+                laser.width += 1;
+                laser.timer++;
+                ctx.fillStyle = `rgba(255, 255, 0, ${0.5 - laser.timer/60})`;
+                ctx.fillRect(laser.x - laser.width/2, 0, laser.width, canvas.height);
+                enemies.forEach((enemy, eIndex) => {
+                    if (enemy.x < laser.x + laser.width/2 && 
+                        enemy.x + enemy.width > laser.x - laser.width/2) {
+                        explosions.push(new Explosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+                        sounds.explosion.currentTime = 0;
+                        sounds.explosion.cloneNode().play();
+                        enemies.splice(eIndex, 1);
+                        score += 10 * spaceship.scoreMultiplier;
+                        document.getElementById("scoreboard").innerText = "Score: " + score;
+                        enemies.push(new Enemy(Math.random() * (canvas.width - 50), Math.random() * -200));
+                    }
+                });
+                if (laser.timer > 30) activeLasers.splice(index, 1);
+            });
+
+            explosions.forEach((explosion, index) => {
+                explosion.update();
+                explosion.draw();
+                if (explosion.alpha <= 0) explosions.splice(index, 1);
+            });
+
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+
+        window.addEventListener("mousemove", (e) => {
+            spaceship.x = e.clientX;
+            spaceship.y = e.clientY;
+        });
+
+        window.addEventListener("mousedown", (e) => {
+            if (spaceship.weaponType === 'single') {
+                sounds.shoot.currentTime = 0;
+                sounds.shoot.play();
+                bullets.push(new Bullet(spaceship.x, spaceship.y - 20, 0, -8, "blue"));
+            } else if (spaceship.weaponType === 'spread') {
+                sounds.shoot.currentTime = 0;
+                sounds.shoot.play();
+                bullets.push(new Bullet(spaceship.x, spaceship.y - 20, -2, -8, "green"));
+                bullets.push(new Bullet(spaceship.x, spaceship.y - 20, 0, -8, "green"));
+                bullets.push(new Bullet(spaceship.x, spaceship.y - 20, 2, -8, "green"));
+            } else if (spaceship.weaponType === 'laser') {
+                sounds.laser.currentTime = 0;
+                sounds.laser.play();
+                activeLasers.push({ x: spaceship.x, width: 20, timer: 0 });
+            }
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (spaceship.weaponType === 'laser' && e.buttons === 1) {
+                sounds.laser.currentTime = 0;
+                sounds.laser.play();
+                activeLasers.push({ x: spaceship.x, width: 20, timer: 0 });
+            }
+        });
+    </script>
+    <script>
+// MODIFIED activeLasers.forEach BLOCK WITH BULLET DESTRUCTION:
+activeLasers.forEach((laser, index) => {
+    laser.width += 1;
+    laser.timer++;
+    ctx.fillStyle = `rgba(255, 255, 0, ${0.5 - laser.timer/60})`;
+    ctx.fillRect(laser.x - laser.width/2, 0, laser.width, canvas.height);
+    
+    // Destroy enemies
+    enemies.forEach((enemy, eIndex) => {
+        if (enemy.x < laser.x + laser.width/2 && 
+            enemy.x + enemy.width > laser.x - laser.width/2) {
+            explosions.push(new Explosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2));
+            sounds.explosion.currentTime = 0;
+            sounds.explosion.cloneNode().play();
+            enemies.splice(eIndex, 1);
+            score += 10 * spaceship.scoreMultiplier;
+            document.getElementById("scoreboard").innerText = "Score: " + score;
+            enemies.push(new Enemy(Math.random() * (canvas.width - 50), Math.random() * -200));
+        }
+    });
+
+    // NEW: Destroy enemy bullets in laser path
+    enemyBullets.forEach((bullet, bIndex) => {
+        if (bullet.x > laser.x - laser.width/2 && 
+            bullet.x < laser.x + laser.width/2) {
+            explosions.push(new Explosion(bullet.x, bullet.y));
+            enemyBullets.splice(bIndex, 1);
+            sounds.explosion.currentTime = 0;
+            sounds.explosion.cloneNode().play();
+        }
+    });
+
+    if (laser.timer > 30) activeLasers.splice(index, 1);
+});
+</script>
+</body>
+</html>
