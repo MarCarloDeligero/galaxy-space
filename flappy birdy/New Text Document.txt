@@ -1,0 +1,16 @@
+CREATE DATABASE galactic_defender;
+USE galactic_defender;
+
+CREATE TABLE completions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_name VARCHAR(50) NOT NULL,
+    completion_date DATETIME NOT NULL
+);
+
+
+ALTER TABLE completions ADD COLUMN score INT NOT NULL AFTER player_name;
+
+
+ALTER TABLE completions
+ADD COLUMN difficulty VARCHAR(10) NOT NULL DEFAULT 'medium',
+ADD UNIQUE INDEX unique_player_difficulty (player_name, difficulty);

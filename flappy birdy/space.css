@@ -1,0 +1,154 @@
+/* Base Cyberpunk Styling */
+.cyber-border {
+  position: relative;
+  border: 2px solid #0ff;
+  padding: 2rem;
+  margin: 2rem;
+  box-shadow: 0 0 15px #0ff,
+              inset 0 0 15px #0ff;
+  background: rgba(0, 20, 30, 0.95);
+}
+
+.hologram-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg,
+    rgba(0, 255, 255, 0.1),
+    rgba(255, 0, 255, 0.1));
+  pointer-events: none;
+  animation: hologram 6s infinite;
+}
+
+@keyframes hologram {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.7; transform: translate(2px, -2px); }
+  100% { opacity: 0.3; }
+}
+
+/* Cyber Button Style */
+.cyber-button {
+  position: relative;
+  background: #000;
+  border: 2px solid #0ff;
+  color: #0ff;
+  padding: 1rem 2rem;
+  margin: 1rem 0;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+.cyber-button:hover {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 15px #0ff;
+  transform: translate(-2px, 2px);
+}
+
+.cyber-button::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, 
+    transparent, #0ff 50%, transparent);
+  transform: rotate(45deg);
+  animation: btnScan 3s infinite;
+}
+
+@keyframes btnScan {
+  0% { top: -50%; }
+  100% { top: 150%; }
+}
+
+/* Glitch Effects */
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.3;
+}
+
+.glitch-text::before {
+  color: #f0f;
+  animation: glitch 3s infinite;
+}
+
+.glitch-text::after {
+  color: #0ff;
+  animation: glitch 2s infinite reverse;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+/* Game Over Alert */
+.alert-border {
+  border-color: #f00;
+  box-shadow: 0 0 30px #f00,
+              inset 0 0 30px #f00;
+  animation: alertPulse 1s infinite;
+}
+
+@keyframes alertPulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+.destruction-meter {
+  background: #300;
+  height: 20px;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.meter-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f00, #f80);
+  transition: width 1s;
+}
+
+.meter-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-shadow: 0 0 5px #f00;
+}
+
+/* CRT Effect for Pause Screen */
+.crt-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
