@@ -1,0 +1,404 @@
+/* admin-style.css - Hacker theme version */
+
+* {
+  box-sizing: border-box;
+  font-family: 'Courier New', monospace; /* Changed to monospace font for hacker feel */
+	margin: 0;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: auto auto 1fr auto;
+  grid-template-areas:
+    "header header"
+    "nav nav"
+    "aside main"
+    "footer footer";
+  gap: 6px;
+  padding: 6px;
+  background: #0a0a0a; /* Dark background */
+  color: #00ff00; /* Bright green text - classic hacker color */
+}
+
+/* Regions */
+header {
+  grid-area: header;
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  padding: 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px solid #003300; /* Green border */
+}
+
+.header-left {
+  font-size: 0.9rem;
+  user-select: none;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.header-left a {
+  color: #00cc00; /* Slightly darker green */
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.header-left a:hover {
+  color: #00ff00; /* Bright green on hover */
+  text-decoration: none;
+}
+
+.header-right {
+  font-size: 0.9rem;
+  user-select: none;
+  font-weight: 600;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+nav {
+  grid-area: nav;
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  padding: 8px;
+  border: 1px solid #003300; /* Green border */
+}
+
+aside {
+  grid-area: aside;
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  padding: 12px;
+  border: 1px solid #003300; /* Green border */
+}
+
+main {
+  grid-area: main;
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  padding: 12px;
+  border: 1px solid #003300; /* Green border */
+  overflow: auto;
+}
+
+footer {
+  grid-area: footer;
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  padding: 8px;
+  text-align: center;
+  border: 1px solid #003300; /* Green border */
+}
+
+h1,
+h2 {
+  margin: 8px 0;
+  color: #00ff00; /* Bright green headings */
+}
+
+form {
+  margin-top: 8px;
+}
+
+label {
+  display: block;
+  margin: 6px 0 3px;
+  font-weight: 600;
+  color: #00ff00; /* Bright green labels */
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+  width: 100%;
+  padding: 8px;
+  background: #000; /* Black input backgrounds */
+  color: #00ff00; /* Green text */
+  border: 1px solid #003300; /* Green border */
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus {
+  border-color: #00ff00; /* Bright green focus border */
+  outline: none;
+}
+
+/* Buttons */
+button,
+input[type="submit"] {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #003300; /* Green border */
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+button:hover,
+input[type="submit"]:hover {
+  background: #003300; /* Slightly brighter green on hover */
+  color: #00ff00;
+}
+
+button.secondary {
+  background: #002200; /* Different shade of green */
+}
+
+button.secondary:hover {
+  background: #003300;
+}
+
+button.danger {
+  background: #220000; /* Dark red for danger */
+  color: #ff3333; /* Bright red text */
+}
+
+button.danger:hover {
+  background: #330000;
+}
+
+/* Users table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  padding: 8px;
+  border-bottom: 1px solid #003300; /* Green borders */
+  text-align: left;
+  color: #00ff00; /* Green text */
+}
+
+thead {
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+}
+
+tbody tr:nth-child(even) {
+  background: #001a00; /* Slightly brighter green for alternating rows */
+}
+
+tbody tr:hover {
+  background: #002200; /* Brighter green on hover */
+}
+
+a {
+  color: #00cc00; /* Green links */
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a:hover {
+  color: #00ff00; /* Bright green on hover */
+  text-decoration: underline;
+}
+
+/* Messages */
+.message {
+  background: #002200; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  border: 1px solid #003300; /* Green border */
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.error {
+  background: #220000; /* Dark red background */
+  color: #ff3333; /* Bright red text */
+  border: 1px solid #330000; /* Dark red border */
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,20,0,0.8); /* Dark green overlay */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Modal content box */
+.modal-content {
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Bright green text */
+  border-radius: 8px;
+  padding: 20px 25px;
+  width: 360px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0,255,0,0.1); /* Green tinted shadow */
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  border: 1px solid #003300; /* Green border */
+}
+
+/* Modal close button */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #220000; /* Dark red */
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #ff3333; /* Bright red text */
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  line-height: 28px;
+  text-align: center;
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease;
+  padding: 0;
+  border: 1px solid #330000; /* Dark red border */
+}
+
+.modal-close:hover {
+  background: #330000;
+}
+
+/* List styling */
+.modal-list {
+  margin-top: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #003300; /* Green border */
+  border-radius: 6px;
+  padding: 10px;
+  list-style: none;
+  background: #000; /* Black background */
+}
+
+.modal-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #003300; /* Green border */
+  color: #00ff00; /* Green text */
+}
+
+.modal-list li:last-child {
+  border-bottom: none;
+}
+
+.modal-list button.danger {
+  background: #220000; /* Dark red */
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  margin-left: 10px;
+  cursor: pointer;
+  border: 1px solid #330000; /* Dark red border */
+  color: #ff3333; /* Bright red text */
+}
+
+/* Input + add button */
+.modal-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+	justify-content: space-around;
+	align-items: center;
+}
+
+.modal-form input[type="text"] {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #000; /* Black background */
+  color: #00ff00; /* Green text */
+  border: 1.5px solid #003300; /* Green border */
+  font-size: 1rem;
+	height: 40px;
+}
+
+.modal-form button {
+  padding: 8px 12px;
+  border-radius: 6px;
+	width: 60px;
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Green text */
+  border: 1px solid #003300; /* Green border */
+  font-size: 1.2rem;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background-color 0.3s ease;
+}
+
+.modal-form button:hover {
+  background: #003300; /* Brighter green on hover */
+}
+
+/* Popup notification centered top */
+.popup-notification {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translate(-50%,50%);
+  background: #001100; /* Dark green background */
+  color: #00ff00; /* Green text */
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(0,255,0,0.2); /* Green tinted shadow */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 11000;
+  max-width: 320px;
+  text-align: center;
+  border: 1px solid #003300; /* Green border */
+}
+
+.popup-notification.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Persistent highlight for currently edited user row */
+tr.highlight {
+  background-color: #003300 !important; /* Dark green highlight */
+  font-weight: bold;
+}
+
+/* Temporary highlight flash for updated row */
+tr.updated-highlight {
+  background-color: #002200; /* Slightly lighter green */
+  transition: background-color 0.5s ease;
+}
