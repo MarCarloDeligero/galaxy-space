@@ -1,0 +1,104 @@
+body {
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	background: #f9f9f9;
+	color: #333;
+}
+
+.container {
+	display: grid;
+	grid-template-areas: 
+			"header header"
+			"aside main";
+	grid-template-columns: 300px 1fr;
+	min-height: 100vh;
+	gap: 1rem;
+}
+
+header {
+	grid-area: header;
+	background: #2c3e50;
+	color: #fff;
+	padding: 1.5rem 2rem;
+	font-size: 1rem;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+	display: grid;
+	place-items: center;
+}
+
+aside {
+	grid-area: aside;
+	background: #ecf0f1;
+	padding: 2rem 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+	border-right: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+aside input,
+aside select,
+aside input[type="submit"] {
+	width: 100%;
+	padding: 0.6rem;
+	margin-bottom: 0.5rem;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 1rem;
+}
+
+aside input[type="submit"] {
+	background-color: #2980b9;
+	color: white;
+	border: none;
+	cursor: pointer;
+	font-weight: bold;
+	transition: background 0.3s;
+}
+
+aside input[type="submit"]:hover {
+	background-color: #3498db;
+}
+
+main {
+	grid-area: main;
+	padding: 2rem;
+	background: #fff;
+	border-radius: 5px;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+	overflow-x: auto;
+}
+
+main h2 {
+	margin-top: 0;
+	margin-bottom: 1rem;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+table th,
+table td {
+	border: 1px solid #ddd;
+	padding: 0.8rem;
+	text-align: left;
+}
+
+table th {
+	background-color: #2980b9;
+	color: white;
+	font-weight: 600;
+}
+
+table tr:nth-child(even) {
+	background-color: #f4f6f7;
+}
+
+table tr:hover {
+	background-color: #e1f0ff;
+}
